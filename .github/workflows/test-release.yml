@@ -1,0 +1,45 @@
+name: Test, release
+
+on:
+  push:
+    branches: [main, develop]
+
+jobs:
+  test-release-deploy:
+    name: Test, Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 8
+        uses: actions/setup-java@v3
+        with:
+          java-version: 8
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: 🧪 Test with Maven
+        run: mvn -B verify
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ⚙️ Semantic Release
+        id: release
+        uses: cycjimmy/semantic-release-action@v3
+        with:
+          extra_plugins: |
+            @semantic-release/exec
+            conventional-changelog-conventionalcommits
+        env:
+          GITHUB_TOKEN: ${{ secrets.OPT_CI_TOKEN }} # un token particulier pour que les workflows sur release soient déclenchés
+
+      - name: 👍 Merge main back to dev
+        if: github.ref == 'refs/heads/main' && steps.release.outputs.new_release_published == 'true'
+        run: |
+            git config --local user.email "github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git fetch
+            git checkout develop
+            git branch --set-upstream-to=origin/develop develop
+            git pull
+            git merge --no-ff main -m "Auto-merge main back to dev"
+            git push

@@ -1,0 +1,82 @@
+{
+  "branches": [
+    "main",
+    {
+      "name": "develop",
+      "prerelease": true
+    }
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer",
+    [
+      "@semantic-release/release-notes-generator",
+      {
+        "preset": "conventionalcommits",
+        "presetConfig": {
+          "types": [
+            {
+              "type": "feat",
+              "section": ":rocket: Features",
+              "hidden": false
+            },
+            {
+              "type": "fix",
+              "section": ":bug: Bug Fixes",
+              "hidden": false
+            },
+            {
+              "type": "docs",
+              "section": ":memo: Documentation",
+              "hidden": false
+            },
+            {
+              "type": "style",
+              "section": ":barber: Stylisation",
+              "hidden": false
+            },
+            {
+              "type": "refactor",
+              "section": ":zap: Refactor",
+              "hidden": false
+            },
+            {
+              "type": "perf",
+              "section": ":fast_forward: Performances",
+              "hidden": false
+            },
+            {
+              "type": "test",
+              "section": ":white_check_mark: Tests",
+              "hidden": false
+            },
+            {
+              "type": "ci",
+              "section": ":repeat: CI",
+              "hidden": false
+            },
+            {
+              "type": "chore",
+              "hidden": true
+            }
+          ]
+        }
+      }
+    ],
+    [
+      "@semantic-release/exec",
+      {
+        "prepareCmd": "mvn -B versions:set -DnewVersion=${nextRelease.version}",
+        "publishCmd": "mvn -B package -DskipTests"
+      }
+    ],
+    [
+      "@semantic-release/github",
+      {
+        "assets": [
+          "target/j7zip.jar"
+        ]
+      }
+    ]
+  ]
+}
+
