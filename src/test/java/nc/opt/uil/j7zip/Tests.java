@@ -71,6 +71,9 @@ public class Tests {
         // check (compare decompressed file with initial)
         assertTrue(Paths.get("target/poem.txt").toFile().exists());
         assertArrayEquals(Files.readAllBytes(Paths.get("src/test/resources/poem.txt")), Files.readAllBytes(Paths.get("target/poem.txt")));
+
+        Paths.get("target/poem.txt").toFile().delete();
+        Paths.get("target/archive.7z").toFile().delete();
     }
 
     @Test
@@ -89,7 +92,12 @@ public class Tests {
         assertEquals(0, exitCode);
 
         // check (compare decompressed file with initial)
-        assertTrue(Paths.get("target/poem.txt").toFile().exists());
-        assertArrayEquals(Files.readAllBytes(Paths.get("src/test/resources/poem.txt")), Files.readAllBytes(Paths.get("target/poem.txt")));
+        assertTrue(Paths.get("target/src/test/resources/poem.txt").toFile().exists());
+        assertArrayEquals(
+            Files.readAllBytes(Paths.get("src/test/resources/poem.txt")),
+            Files.readAllBytes(Paths.get("target/src/test/resources/poem.txt"))
+        );
+
+        Paths.get("target/src/test/resources/poem.txt").toFile().delete();
     }
 }
