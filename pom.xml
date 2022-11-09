@@ -14,6 +14,9 @@
         <commons-compress.version>1.22</commons-compress.version>
         <xz.version>1.9</xz.version>
         <picocli.version>4.6.3</picocli.version>
+
+        <!-- Test -->
+        <junit.version>5.9.0</junit.version>
     </properties>
 
     <dependencies>
@@ -31,6 +34,13 @@
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
             <version>${picocli.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

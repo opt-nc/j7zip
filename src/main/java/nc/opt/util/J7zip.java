@@ -1,6 +1,5 @@
 package nc.opt.util;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -28,17 +27,14 @@ import picocli.CommandLine.Parameters;
 )
 public class J7zip implements Callable<Integer> {
 
-    @Parameters
-    private String[] names;
-
-    @Option(names = { "-c", "--stdout", "--to-stdout" }, description = "output data to stdout")
-    private boolean stdout;
-
-    @Option(names = { "-d", "--decompress", "--uncompress" }, description = "decompress file")
-    private boolean decompress;
+    @Parameters(description = "${COMPLETION-CANDIDATES}")
+    private Command command;
 
     @Option(names = { "-p", "--password" })
     private String password;
+
+    @Parameters(description = "<archive> <files>..")
+    private String[] names;
 
     public static void main(String... args) {
         System.exit(new CommandLine(new J7zip()).execute(args));
@@ -46,27 +42,19 @@ public class J7zip implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        if (decompress) {
+        if (command == Command.x || command == Command.e) {
             if (names.length == 0) {
                 System.err.println("Archive file name missing");
                 return 1;
             }
-
-            if (stdout) {
-                J7zip.decompress(names[0], null, password);
-            } else {
-                if (names.length < 2) {
-                    System.err.println("Destination path missing");
-                    return 1;
-                }
-                J7zip.decompress(names[0], names[1], password);
-            }
-        } else {
-            if (stdout){
-                System.err.println("stdout only applicable on decompression");
+            if (names.length < 2) {
+                System.err.println("Destination path missing");
                 return 1;
             }
-            if (password != null){
+
+            J7zip.decompress(names[1], names[2], password, command == Command.x);
+        } else if (command == Command.a) {
+            if (password != null) {
                 System.err.println("password protection is only applicable on decompression");
                 return 1;
             }
@@ -75,7 +63,7 @@ public class J7zip implements Callable<Integer> {
                 return 1;
             }
 
-            J7zip.compress(names[0], Stream.of(names).skip(1).map(File::new).toArray(File[]::new));
+            J7zip.compress(names[1], Stream.of(names).skip(2).map(File::new).toArray(File[]::new));
         }
         return 0;
     }
@@ -83,36 +71,7 @@ public class J7zip implements Callable<Integer> {
     public static void compress(String name, File... files) throws IOException {
         try (SevenZOutputFile out = new SevenZOutputFile(new File(name))) {
             for (File file : files) {
-                addToArchiveCompression(out, file, ".");
-            }
-        }
-    }
-
-    public static void decompress(String in, String destination, String password) throws IOException {
-        try (SevenZFile sevenZFile = new SevenZFile(new File(in), password != null ? password.toCharArray() : null)) {
-            SevenZArchiveEntry entry;
-            int count = 0;
-            while ((entry = sevenZFile.getNextEntry()) != null) {
-                if (entry.isDirectory()) {
-                    continue;
-                }
-                if (destination != null) {
-                    Paths.get(destination, entry.getName()).toFile().getParentFile().mkdirs();
-                } else if (count > 0) {
-                    System.err.println("❌ More than one file exists in archive, the stdout is not suitable for that");
-                    System.exit(1);
-                    return;
-                }
-                try (
-                    OutputStream out = destination != null
-                        ? new FileOutputStream(new File(destination, entry.getName()))
-                        : new BufferedOutputStream(System.out)
-                ) {
-                    byte[] content = new byte[(int) entry.getSize()];
-                    sevenZFile.read(content, 0, content.length);
-                    out.write(content);
-                }
-                count++;
+                addToArchiveCompression(out, file, file.getParent());
             }
         }
     }
@@ -143,11 +102,51 @@ public class J7zip implements Callable<Integer> {
         }
     }
 
+    public static void decompress(String in, String destination, String password, boolean arbo) throws IOException {
+        try (SevenZFile sevenZFile = new SevenZFile(new File(in), password != null ? password.toCharArray() : null)) {
+            SevenZArchiveEntry entry;
+            while ((entry = sevenZFile.getNextEntry()) != null) {
+                if (entry.isDirectory()) {
+                    continue;
+                }
+                String name;
+                if (arbo) {
+                    Paths.get(destination, entry.getName()).toFile().getParentFile().mkdirs();
+                    name = entry.getName();
+                } else {
+                    name = Paths.get(entry.getName()).toFile().getName();
+                }
+                try (OutputStream out = new FileOutputStream(new File(destination, name))) {
+                    byte[] content = new byte[(int) entry.getSize()];
+                    sevenZFile.read(content, 0, content.length);
+                    out.write(content);
+                }
+            }
+        }
+    }
+
     static class VersionProvider implements IVersionProvider {
 
         @Override
         public String[] getVersion() throws Exception {
             return new String[] { J7zip.class.getPackage().getImplementationVersion() };
+        }
+    }
+
+    enum Command {
+        x("eXtract files with full paths"),
+        e("Extract files from archive (without using directory names)"),
+        a("Add files to archive");
+
+        private String description;
+
+        private Command(String description) {
+            this.description = description;
+        }
+
+        @Override
+        public String toString() {
+            return name() + " (" + description + ")";
         }
     }
 }
