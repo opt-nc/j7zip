@@ -2,6 +2,7 @@ package nc.opt.uil.j7zip;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.ByteArrayOutputStream;
@@ -60,13 +61,12 @@ public class Tests {
         exitCode = new CommandLine(new J7zip()).execute(new String[] { "e", "target/archive.7z", "target" });
         restoreStreams();
 
+        assertEquals(0, exitCode);
         err = new String(this.err.toByteArray());
         if (!err.isEmpty()) {
             System.err.println(err);
             throw new AssertionFailedError(err);
         }
-
-        assertEquals(0, exitCode);
 
         // check (compare decompressed file with initial)
         assertTrue(Paths.get("target/poem.txt").toFile().exists());
@@ -76,6 +76,9 @@ public class Tests {
         Paths.get("target/archive.7z").toFile().delete();
     }
 
+    /**
+     * Test with a archive file compressed by 7z tool
+     */
     @Test
     public void testDecompressWithPassword() throws IOException {
         // compress
@@ -83,13 +86,12 @@ public class Tests {
             .execute(new String[] { "x", "-p", "poem", "src/test/resources/poem-with-password.7z", "target" });
         restoreStreams();
 
+        assertEquals(0, exitCode);
         String err = new String(this.err.toByteArray());
         if (!err.isEmpty()) {
             System.err.println(err);
             throw new AssertionFailedError(err);
         }
-
-        assertEquals(0, exitCode);
 
         // check (compare decompressed file with initial)
         assertTrue(Paths.get("target/src/test/resources/poem.txt").toFile().exists());
@@ -99,5 +101,50 @@ public class Tests {
         );
 
         Paths.get("target/src/test/resources/poem.txt").toFile().delete();
+    }
+
+    @Test
+    public void testCompressDecompressWithPassowrd() throws IOException {
+        // compress
+        int exitCode = new CommandLine(new J7zip())
+            .execute(new String[] { "a", "-p", "frog", "target/archive.7z", "src/test/resources/poem.txt" });
+        restoreStreams();
+
+        assertEquals(0, exitCode);
+        String err = new String(this.err.toByteArray());
+        if (!err.isEmpty()) {
+            System.err.println(err);
+            throw new AssertionFailedError(err);
+        }
+
+        // checks (compare file size original > compressed)
+        assertTrue(Paths.get("target/archive.7z").toFile().exists());
+        assertTrue(Paths.get("target/archive.7z").toFile().length() < Paths.get("src/test/resources/poem.txt").toFile().length());
+
+        // decompress without password : should fail
+        setUpStreams();
+        exitCode = new CommandLine(new J7zip()).execute(new String[] { "e", "target/archive.7z", "target" });
+        restoreStreams();
+
+        assertNotEquals(0, exitCode);
+
+        // decompress
+        setUpStreams();
+        exitCode = new CommandLine(new J7zip()).execute(new String[] { "e", "-p", "frog", "target/archive.7z", "target" });
+        restoreStreams();
+
+        assertEquals(0, exitCode);
+        err = new String(this.err.toByteArray());
+        if (!err.isEmpty()) {
+            System.err.println(err);
+            throw new AssertionFailedError(err);
+        }
+
+        // check (compare decompressed file with initial)
+        assertTrue(Paths.get("target/poem.txt").toFile().exists());
+        assertArrayEquals(Files.readAllBytes(Paths.get("src/test/resources/poem.txt")), Files.readAllBytes(Paths.get("target/poem.txt")));
+
+        Paths.get("target/poem.txt").toFile().delete();
+        // Paths.get("target/archive.7z").toFile().delete();
     }
 }

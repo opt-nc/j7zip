@@ -54,22 +54,18 @@ public class J7zip implements Callable<Integer> {
 
             J7zip.decompress(names[1], names[2], password, command == Command.x);
         } else if (command == Command.a) {
-            if (password != null) {
-                System.err.println("password protection is only applicable on decompression");
-                return 1;
-            }
             if (names.length < 2) {
                 System.err.println("Destination archive file name or source dir(s)/file(s) missing");
                 return 1;
             }
 
-            J7zip.compress(names[1], Stream.of(names).skip(2).map(File::new).toArray(File[]::new));
+            J7zip.compress(names[1], password, Stream.of(names).skip(2).map(File::new).toArray(File[]::new));
         }
         return 0;
     }
 
-    public static void compress(String name, File... files) throws IOException {
-        try (SevenZOutputFile out = new SevenZOutputFile(new File(name))) {
+    public static void compress(String name, String password, File... files) throws IOException {
+        try (SevenZOutputFile out = new SevenZOutputFile(new File(name), password != null ? password.toCharArray() : null)) {
             for (File file : files) {
                 addToArchiveCompression(out, file, file.getParent());
             }
