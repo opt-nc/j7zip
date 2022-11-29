@@ -50,7 +50,7 @@ class Coders {
             put(SevenZMethod.LZMA, new LZMADecoder());
             put(SevenZMethod.LZMA2, new LZMA2Decoder());
             put(SevenZMethod.DEFLATE, new DeflateDecoder());
-            put(SevenZMethod.AES256SHA256, new AES256SHA256Coder());
+            put(SevenZMethod.AES256SHA256, new AES256SHA256Decoder());
             put(SevenZMethod.BCJ_X86_FILTER, new BCJDecoder(new X86Options()));
             put(SevenZMethod.BCJ_PPC_FILTER, new BCJDecoder(new PowerPCOptions()));
             put(SevenZMethod.BCJ_IA64_FILTER, new BCJDecoder(new IA64Options()));

@@ -145,6 +145,6 @@ public class Tests {
         assertArrayEquals(Files.readAllBytes(Paths.get("src/test/resources/poem.txt")), Files.readAllBytes(Paths.get("target/poem.txt")));
 
         Paths.get("target/poem.txt").toFile().delete();
-        // Paths.get("target/archive.7z").toFile().delete();
+        Paths.get("target/archive.7z").toFile().delete();
     }
 }

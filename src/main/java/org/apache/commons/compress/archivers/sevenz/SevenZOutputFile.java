@@ -47,6 +47,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Spliterator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import java.util.zip.CRC32;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.utils.CountingOutputStream;
@@ -56,7 +60,6 @@ import org.apache.commons.compress.utils.CountingOutputStream;
  * @since 1.6
  */
 public class SevenZOutputFile implements Closeable {
-
     private final SeekableByteChannel channel;
     private final List<SevenZArchiveEntry> files = new ArrayList<>();
     private int numNonEmptyStreams;
@@ -66,9 +69,8 @@ public class SevenZOutputFile implements Closeable {
     private boolean finished;
     private CountingOutputStream currentOutputStream;
     private CountingOutputStream[] additionalCountingStreams;
-    private Iterable<? extends SevenZMethodConfiguration> contentMethods = Collections.singletonList(
-        new SevenZMethodConfiguration(SevenZMethod.LZMA2)
-    );
+    private Iterable<? extends SevenZMethodConfiguration> contentMethods =
+            Collections.singletonList(new SevenZMethodConfiguration(SevenZMethod.LZMA2));
     private final Map<SevenZArchiveEntry, long[]> additionalSizes = new HashMap<>();
     private byte[] password;
 
@@ -132,11 +134,6 @@ public class SevenZOutputFile implements Closeable {
         channel.position(SevenZFile.SIGNATURE_HEADER_SIZE);
         if (password != null) {
             this.password = utf16Decode(password);
-            this.contentMethods =
-                Arrays.asList(
-                    new SevenZMethodConfiguration(SevenZMethod.AES256SHA256, new AES256Options(this.password)),
-                    new SevenZMethodConfiguration(SevenZMethod.LZMA2)
-                );
         }
     }
 
@@ -197,7 +194,8 @@ public class SevenZOutputFile implements Closeable {
      * @param entryName the name to use
      * @return the ArchiveEntry set up with details from the file
      */
-    public SevenZArchiveEntry createArchiveEntry(final File inputFile, final String entryName) {
+    public SevenZArchiveEntry createArchiveEntry(final File inputFile,
+            final String entryName) {
         final SevenZArchiveEntry entry = new SevenZArchiveEntry();
         entry.setDirectory(inputFile.isDirectory());
         entry.setName(entryName);
@@ -216,8 +214,8 @@ public class SevenZOutputFile implements Closeable {
      * @throws IOException on error
      * @since 1.21
      */
-    public SevenZArchiveEntry createArchiveEntry(final Path inputPath, final String entryName, final LinkOption... options)
-        throws IOException {
+    public SevenZArchiveEntry createArchiveEntry(final Path inputPath,
+        final String entryName, final LinkOption... options) throws IOException {
         final SevenZArchiveEntry entry = new SevenZArchiveEntry();
         entry.setDirectory(Files.isDirectory(inputPath, options));
         entry.setName(entryName);
@@ -357,16 +355,12 @@ public class SevenZOutputFile implements Closeable {
         final CRC32 crc32 = new CRC32();
         crc32.update(headerBytes);
 
-        final ByteBuffer bb = ByteBuffer
-            .allocate(
-                SevenZFile.sevenZSignature.length +
-                2/* version */ +
-                4/* start header CRC */ +
-                8/* next header position */ +
-                8/* next header length */ +
-                4
-                /* next header CRC */
-            )
+        final ByteBuffer bb = ByteBuffer.allocate(SevenZFile.sevenZSignature.length
+                                            + 2 /* version */
+                                            + 4 /* start header CRC */
+                                            + 8 /* next header position */
+                                            + 8 /* next header length */
+                                            + 4 /* next header CRC */)
             .order(ByteOrder.LITTLE_ENDIAN);
         // signature header
         channel.position(0);
@@ -378,8 +372,7 @@ public class SevenZOutputFile implements Closeable {
         bb.putInt(0);
 
         // start header
-        bb
-            .putLong(headerPosition - SevenZFile.SIGNATURE_HEADER_SIZE)
+        bb.putLong(headerPosition - SevenZFile.SIGNATURE_HEADER_SIZE)
             .putLong(0xffffFFFFL & headerBytes.length)
             .putInt((int) crc32.getValue());
         crc32.reset();
@@ -436,7 +429,8 @@ public class SevenZOutputFile implements Closeable {
             }
 
             @Override
-            public void write(final byte[] b, final int off, final int len) throws IOException {
+            public void write(final byte[] b, final int off, final int len)
+                throws IOException {
                 super.write(b, off, len);
                 crc32.update(b, off, len);
             }
@@ -445,7 +439,19 @@ public class SevenZOutputFile implements Closeable {
 
     private Iterable<? extends SevenZMethodConfiguration> getContentMethods(final SevenZArchiveEntry entry) {
         final Iterable<? extends SevenZMethodConfiguration> ms = entry.getContentMethods();
-        return ms == null ? contentMethods : ms;
+        Iterable<? extends SevenZMethodConfiguration> iter = ms == null ? contentMethods : ms;
+
+        if (password != null) {
+            // prepend encryption
+            iter =
+                Stream
+                    .concat(
+                        Stream.of(new SevenZMethodConfiguration(SevenZMethod.AES256SHA256, new AES256Options(this.password))),
+                        StreamSupport.stream(iter.spliterator(), false)
+                    )
+                    .collect(Collectors.toList());
+        }
+        return iter;
     }
 
     private void writeHeader(final DataOutput header) throws IOException {
@@ -546,7 +552,8 @@ public class SevenZOutputFile implements Closeable {
 
     private void writeSingleCodec(final SevenZMethodConfiguration m, final OutputStream bos) throws IOException {
         final byte[] id = m.getMethod().getId();
-        final byte[] properties = Coders.findByMethod(m.getMethod()).getOptionsAsProperties(m.getOptions());
+        final byte[] properties = Coders.findByMethod(m.getMethod())
+            .getOptionsAsProperties(m.getOptions());
 
         int codecFlags = id.length;
         if (properties.length > 0) {
@@ -696,7 +703,8 @@ public class SevenZOutputFile implements Closeable {
             out.write(0);
             for (final SevenZArchiveEntry entry : files) {
                 if (entry.getHasCreationDate()) {
-                    out.writeLong(Long.reverseBytes(SevenZArchiveEntry.javaTimeToNtfsTime(entry.getCreationDate())));
+                    out.writeLong(Long.reverseBytes(
+                            SevenZArchiveEntry.javaTimeToNtfsTime(entry.getCreationDate())));
                 }
             }
             out.flush();
@@ -731,7 +739,8 @@ public class SevenZOutputFile implements Closeable {
             out.write(0);
             for (final SevenZArchiveEntry entry : files) {
                 if (entry.getHasAccessDate()) {
-                    out.writeLong(Long.reverseBytes(SevenZArchiveEntry.javaTimeToNtfsTime(entry.getAccessDate())));
+                    out.writeLong(Long.reverseBytes(
+                            SevenZArchiveEntry.javaTimeToNtfsTime(entry.getAccessDate())));
                 }
             }
             out.flush();
@@ -766,7 +775,8 @@ public class SevenZOutputFile implements Closeable {
             out.write(0);
             for (final SevenZArchiveEntry entry : files) {
                 if (entry.getHasLastModifiedDate()) {
-                    out.writeLong(Long.reverseBytes(SevenZArchiveEntry.javaTimeToNtfsTime(entry.getLastModifiedDate())));
+                    out.writeLong(Long.reverseBytes(
+                            SevenZArchiveEntry.javaTimeToNtfsTime(entry.getLastModifiedDate())));
                 }
             }
             out.flush();
@@ -816,7 +826,7 @@ public class SevenZOutputFile implements Closeable {
         int mask = 0x80;
         int i;
         for (i = 0; i < 8; i++) {
-            if (value < ((1L << (7 * (i + 1))))) {
+            if (value < ((1L << ( 7  * (i + 1))))) {
                 firstByte |= (value >>> (8 * i));
                 break;
             }
@@ -855,10 +865,8 @@ public class SevenZOutputFile implements Closeable {
     }
 
     private class OutputStreamWrapper extends OutputStream {
-
         private static final int BUF_SIZE = 8192;
         private final ByteBuffer buffer = ByteBuffer.allocate(BUF_SIZE);
-
         @Override
         public void write(final int b) throws IOException {
             buffer.clear();
@@ -874,7 +882,8 @@ public class SevenZOutputFile implements Closeable {
         }
 
         @Override
-        public void write(final byte[] b, final int off, final int len) throws IOException {
+        public void write(final byte[] b, final int off, final int len)
+            throws IOException {
             if (len > BUF_SIZE) {
                 channel.write(ByteBuffer.wrap(b, off, len));
             } else {
@@ -896,4 +905,5 @@ public class SevenZOutputFile implements Closeable {
             // the file will be closed by the containing class's close method
         }
     }
+
 }
