@@ -13,10 +13,10 @@
 
         <!-- <commons-compress.version>1.22</commons-compress.version> -->
         <xz.version>1.9</xz.version>
-        <picocli.version>4.6.3</picocli.version>
+        <picocli.version>4.7.0</picocli.version>
 
         <!-- Test -->
-        <junit.version>5.9.0</junit.version>
+        <junit.version>5.9.1</junit.version>
         <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
     </properties>
 
@@ -73,7 +73,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
