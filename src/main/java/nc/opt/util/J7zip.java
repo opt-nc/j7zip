@@ -8,11 +8,9 @@ import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
-
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
-
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
@@ -79,8 +77,8 @@ public class J7zip implements Callable<Integer> {
             out.putArchiveEntry(entry);
 
             try (FileInputStream in = new FileInputStream(file)) {
-                byte[] b = new byte[1024];
-                int count = 0;
+                byte[] b = new byte[8092];
+                int count;
                 while ((count = in.read(b)) > 0) {
                     out.write(b, 0, count);
                 }
@@ -112,11 +110,17 @@ public class J7zip implements Callable<Integer> {
                 } else {
                     name = Paths.get(entry.getName()).toFile().getName();
                 }
-                try (OutputStream out = new FileOutputStream(new File(destination, name))) {
-                    // FIXME: what if the file is big ? What about what is actually read ?
-                    byte[] content = new byte[(int) entry.getSize()];
-                    sevenZFile.read(content, 0, content.length);
-                    out.write(content);
+
+                File file = new File(destination, name);
+                if (!file.toPath().normalize().startsWith(Paths.get(destination))) {
+                    throw new IllegalStateException("Bad zip entry");
+                }
+                try (OutputStream out = new FileOutputStream(file)) {
+                    byte[] buffer = new byte[8092];
+                    int read;
+                    while ((read = sevenZFile.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
                 }
             }
         }
