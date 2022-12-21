@@ -28,7 +28,7 @@ import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.LZMAInputStream;
 import org.tukaani.xz.LZMAOutputStream;
 
-class LZMADecoder extends CoderBase {
+class LZMADecoder extends AbstractCoder {
     LZMADecoder() {
         super(LZMA2Options.class, Number.class);
     }
@@ -56,12 +56,24 @@ class LZMADecoder extends CoderBase {
         return lzmaIn;
     }
 
-    @SuppressWarnings("resource")
     @Override
     OutputStream encode(final OutputStream out, final Object opts)
         throws IOException {
         // NOOP as LZMAOutputStream throws an exception in flush
         return new FlushShieldFilterOutputStream(new LZMAOutputStream(out, getOptions(opts), false));
+    }
+
+    private int getDictionarySize(final Coder coder) throws IllegalArgumentException {
+        return (int) ByteUtils.fromLittleEndian(coder.properties, 1, 4);
+    }
+
+    private LZMA2Options getOptions(final Object opts) throws IOException {
+        if (opts instanceof LZMA2Options) {
+            return (LZMA2Options) opts;
+        }
+        final LZMA2Options options = new LZMA2Options();
+        options.setDictSize(numberOptionOrDefault(opts));
+        return options;
     }
 
     @Override
@@ -96,20 +108,7 @@ class LZMADecoder extends CoderBase {
         return opts;
     }
 
-    private int getDictionarySize(final Coder coder) throws IllegalArgumentException {
-        return (int) ByteUtils.fromLittleEndian(coder.properties, 1, 4);
-    }
-
-    private LZMA2Options getOptions(final Object opts) throws IOException {
-        if (opts instanceof LZMA2Options) {
-            return (LZMA2Options) opts;
-        }
-        final LZMA2Options options = new LZMA2Options();
-        options.setDictSize(numberOptionOrDefault(opts));
-        return options;
-    }
-
     private int numberOptionOrDefault(final Object opts) {
-        return numberOptionOrDefault(opts, LZMA2Options.DICT_SIZE_DEFAULT);
+        return toInt(opts, LZMA2Options.DICT_SIZE_DEFAULT);
     }
 }

@@ -113,6 +113,7 @@ public class J7zip implements Callable<Integer> {
                     name = Paths.get(entry.getName()).toFile().getName();
                 }
                 try (OutputStream out = new FileOutputStream(new File(destination, name))) {
+                    // FIXME: what if the file is big ? What about what is actually read ?
                     byte[] content = new byte[(int) entry.getSize()];
                     sevenZFile.read(content, 0, content.length);
                     out.write(content);
