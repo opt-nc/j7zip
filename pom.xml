@@ -16,7 +16,7 @@
         <picocli.version>4.7.0</picocli.version>
 
         <!-- Test -->
-        <junit.version>5.9.0</junit.version>
+        <junit.version>5.9.1</junit.version>
         <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
     </properties>
 
