@@ -7,12 +7,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
-
 import org.apache.commons.compress.PasswordRequiredException;
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
-
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
@@ -68,7 +66,10 @@ public class J7zip implements Callable<Integer> {
             }
 
             J7zip.compress(archive, password, names);
+        } else if (command == Command.l) {
+            list(archive);
         }
+
         return 0;
     }
 
@@ -138,6 +139,17 @@ public class J7zip implements Callable<Integer> {
         }
     }
 
+    public static void list(String in) throws IOException {
+        try (SevenZFile sevenZFile = new SevenZFile(new File(in))) {
+            SevenZArchiveEntry entry;
+            while ((entry = sevenZFile.getNextEntry()) != null) {
+                if (!entry.isDirectory()) {
+                    System.out.println(entry.getName());
+                }
+            }
+        }
+    }
+
     static class VersionProvider implements IVersionProvider {
 
         @Override
@@ -149,7 +161,8 @@ public class J7zip implements Callable<Integer> {
     enum Command {
         x("eXtract files with full paths"),
         e("Extract files from archive (without using directory names)"),
-        a("Add files to archive");
+        a("Add files to archive"),
+        l("list files from archive");
 
         private String description;
 
