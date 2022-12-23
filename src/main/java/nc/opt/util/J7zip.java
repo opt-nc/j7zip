@@ -7,10 +7,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
-import java.util.stream.Stream;
+
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
@@ -25,14 +26,22 @@ import picocli.CommandLine.Parameters;
 )
 public class J7zip implements Callable<Integer> {
 
-    @Parameters(description = "${COMPLETION-CANDIDATES}")
-    private Command command;
-
     @Option(names = { "-p", "--password" })
     private String password;
 
-    @Parameters(description = "<archive> <files>..")
-    private String[] names;
+    @Parameters(description = "${COMPLETION-CANDIDATES}")
+    private Command command;
+
+    @Parameters(description = { "archive file to for compression or decompression" })
+    private String archive;
+
+    @Parameters(
+        index = "2..*",
+        arity = "0..*",
+        paramLabel = "<files|destination>",
+        description = { "list of <files> to compress", "<destination> path for decompression (optional)" }
+    )
+    private String[] names = new String[0];
 
     public static void main(String... args) {
         System.exit(new CommandLine(new J7zip()).execute(args));
@@ -42,29 +51,25 @@ public class J7zip implements Callable<Integer> {
     public Integer call() throws Exception {
         if (command == Command.x || command == Command.e) {
             if (names.length == 0) {
-                System.err.println("Archive file name missing");
-                return 1;
+                J7zip.decompress(archive, ".", password, command == Command.x);
+            } else {
+                J7zip.decompress(archive, names[0], password, command == Command.x);
             }
-            if (names.length < 2) {
-                System.err.println("Destination path missing");
-                return 1;
-            }
-
-            J7zip.decompress(names[1], names[2], password, command == Command.x);
         } else if (command == Command.a) {
-            if (names.length < 2) {
-                System.err.println("Destination archive file name or source dir(s)/file(s) missing");
+            if (names.length == 0) {
+                System.err.println("Source dir(s)/file(s) missing");
                 return 1;
             }
 
-            J7zip.compress(names[1], password, Stream.of(names).skip(2).map(File::new).toArray(File[]::new));
+            J7zip.compress(archive, password, names);
         }
         return 0;
     }
 
-    public static void compress(String name, String password, File... files) throws IOException {
+    public static void compress(String name, String password, String... files) throws IOException {
         try (SevenZOutputFile out = new SevenZOutputFile(new File(name), password != null ? password.toCharArray() : null)) {
-            for (File file : files) {
+            for (String filename : files) {
+                File file = new File(filename);
                 addToArchiveCompression(out, file, file.getParent());
             }
         }
@@ -97,6 +102,7 @@ public class J7zip implements Callable<Integer> {
     }
 
     public static void decompress(String in, String destination, String password, boolean arbo) throws IOException {
+        destination = Paths.get(destination).toAbsolutePath().normalize().toString(); // absolute destination path for security check
         try (SevenZFile sevenZFile = new SevenZFile(new File(in), password != null ? password.toCharArray() : null)) {
             SevenZArchiveEntry entry;
             while ((entry = sevenZFile.getNextEntry()) != null) {
@@ -112,7 +118,7 @@ public class J7zip implements Callable<Integer> {
                 }
 
                 File file = new File(destination, name);
-                if (!file.toPath().normalize().startsWith(Paths.get(destination))) {
+                if (!file.toPath().normalize().startsWith(Paths.get(destination))) { // security check: prevent "Zip Slip" vulnerability
                     throw new IllegalStateException("Bad zip entry");
                 }
                 try (OutputStream out = new FileOutputStream(file)) {
