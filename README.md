@@ -17,4 +17,7 @@ java -jar j7zip.jar -h
 
 # 🙏 Credits
 
-This tool is based on [Apache commons-compress](https://commons.apache.org/proper/commons-compress/) and [xz](https://tukaani.org/xz/java.html)
+This tool is based on:
+
+- [Apache commons-compress](https://commons.apache.org/proper/commons-compress/)
+- [xz](https://tukaani.org/xz/java.html)
