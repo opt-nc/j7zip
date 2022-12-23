@@ -8,6 +8,7 @@ import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.util.concurrent.Callable;
 
+import org.apache.commons.compress.PasswordRequiredException;
 import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
 import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
@@ -50,10 +51,15 @@ public class J7zip implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         if (command == Command.x || command == Command.e) {
-            if (names.length == 0) {
-                J7zip.decompress(archive, ".", password, command == Command.x);
-            } else {
-                J7zip.decompress(archive, names[0], password, command == Command.x);
+            try {
+                if (names.length == 0) {
+                    J7zip.decompress(archive, ".", password, command == Command.x);
+                } else {
+                    J7zip.decompress(archive, names[0], password, command == Command.x);
+                }
+            } catch (PasswordRequiredException e) {
+                System.err.println("password required");
+                return 1;
             }
         } else if (command == Command.a) {
             if (names.length == 0) {
