@@ -111,6 +111,40 @@ public class Tests {
         Paths.get("target/archive.7z").toFile().delete();
     }
 
+    @Test
+    public void testCompressDirectory() throws IOException {
+        // compress
+        int exitCode = new CommandLine(new J7zip()).execute(new String[] { "a", "target/archive.7z", "src" });
+        restoreStreams();
+
+        String err = new String(this.err.toByteArray());
+        if (!err.isEmpty()) {
+            System.err.println(err);
+            throw new AssertionFailedError(err);
+        }
+        assertEquals(0, exitCode);
+
+        // list contents of file
+        setUpStreams();
+        exitCode = new CommandLine(new J7zip()).execute(new String[] { "l", "target/archive.7z" });
+        restoreStreams();
+
+        err = new String(this.err.toByteArray());
+        if (!err.isEmpty()) {
+            System.err.println(err);
+            throw new AssertionFailedError(err);
+        }
+        assertEquals(0, exitCode);
+
+        String[] lines = new String(this.out.toByteArray()).split("\n");
+        assertNotEquals(0, lines.length);
+        for (String entry : lines) {
+            assertTrue(entry.startsWith("src/"), "entry not starts with src/ : " + entry);
+        }
+
+        Paths.get("target/archive.7z").toFile().delete();
+    }
+
     /**
      * Test with a archive file compressed by 7z tool
      */

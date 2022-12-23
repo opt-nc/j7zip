@@ -83,7 +83,7 @@ public class J7zip implements Callable<Integer> {
     }
 
     private static void addToArchiveCompression(SevenZOutputFile out, File file, String dir) throws IOException {
-        String name = dir + File.separator + file.getName();
+        String name = (dir != null ? dir + File.separator : "") + file.getName();
         if (file.isFile()) {
             SevenZArchiveEntry entry = out.createArchiveEntry(file, name);
             out.putArchiveEntry(entry);
