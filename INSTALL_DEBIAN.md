@@ -21,7 +21,7 @@ clear
 
 ```
 # Set up the target version
-export J7ZIP_VERSION=v1.0.0
+export J7ZIP_VERSION=v1.1.0
 
 # !!! DO NOT CHANGE ANYTHING BELOW THIS LINE !!!
 curl -LO https://github.com/opt-nc/j7zip/releases/download/$J7ZIP_VERSION/j7zip.jar
@@ -52,5 +52,18 @@ j7zip -V
 
 # Get some help
 j7zip -h
-```
 
+git clone https://github.com/opt-nc/j7zip.git
+cd j7zip/src/test/resources/
+
+# Compress & protect with password
+cp poem.txt poem.txt.org
+j7zip --password=mysecret a poem.7z poem.txt
+file poem.7z
+du -sh * .
+
+
+# Uncompress with password
+j7zip --password=mysecret e poem.7z
+md5sum poem.txt*
+```
