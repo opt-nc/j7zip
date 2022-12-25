@@ -15,6 +15,14 @@ After downloading, get the lastest help usage typing :
 java -jar j7zip.jar -h
 ```
 
+# 👴 Supported systems
+
+Below a list of systems on which we have installed and tested `j7zip` (the older the better 😅) :
+
+| Operating System     | Java runtime                   |
+| -------------------- | ------------------------------ |
+| `Ubuntu 20.04.5 LTS` | `openjdk version "1.8.0_302"`  |
+
 # 🙏 Credits
 
 This tool is based on:
