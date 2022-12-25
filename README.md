@@ -15,6 +15,11 @@ After downloading, get the lastest help usage typing :
 java -jar j7zip.jar -h
 ```
 
+# 🧑‍🎓 Give `j7zip` a try
+
+A [dedicated Killecoda scenario](https://killercoda.com/opt-labs/course/devops-tools/j7zip) has been created
+so you can give it a try **from your browser**.
+
 # 🙏 Credits
 
 This tool is based on:
