@@ -2,23 +2,36 @@
 ![Build](https://github.com/opt-nc/j7zip/actions/workflows/test-release.yml/badge.svg)
 ![CodeQL](https://github.com/opt-nc/j7zip/actions/workflows/codeql-analysis.yml/badge.svg)
 
-#  j7zip
-
 # ❔ About
 
-Command line tool to compress / decompress files using [LZMA](https://www.7-zip.org/sdk.html) algortihm (like [7-Zip](https://www.7-zip.org) for .7z) with password protection, same like `p7zip` but in Java 8 ! :drum: _(for compatibility with AS400 :vhs:)_
+`j7zip` is Command line tool to compress / decompress files using [LZMA](https://www.7-zip.org/sdk.html)
+algortihm (like [7-Zip](https://www.7-zip.org) for .7z) with password protection, same like `p7zip` 
+but in Java 8 ! :drum: _(for compatibility with AS400 :vhs:)_
+
+
 
 # :pager: Usage 
 
 After downloading, get the lastest help usage typing :
+
 ```shell
 java -jar j7zip.jar -h
 ```
 
-# 🧑‍🎓 Give `j7zip` a try
+#  🕹️ Give `j7zip` a try
 
-A [dedicated Killecoda scenario](https://killercoda.com/opt-labs/course/devops-tools/j7zip) has been created
-so you can give it a try **from your browser**.
+A [dedicated Killecoda scenario](https://killercoda.com/opt-labs/course/devops-tools/j7zip) has
+been created so you can give it a try **from your browser**.
+
+
+# 👴 Supported systems
+
+Below a list of systems (add your's) on which we have installed and tested `j7zip` (the older the better 😅) :
+
+| Operating System     | Java runtime                   |
+| -------------------- | ------------------------------ |
+| `Ubuntu 20.04.5 LTS` | `openjdk version "1.8.0_302"`  |
+
 
 # 🙏 Credits
 
