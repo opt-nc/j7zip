@@ -5,8 +5,10 @@
 # ❔ About
 
 `j7zip` is Command line tool to compress / decompress files using [LZMA](https://www.7-zip.org/sdk.html)
-algortihm (like [7-Zip](https://www.7-zip.org) for .7z) with password protection,
-same like `p7zip` but in Java 8 ! :drum: _(for compatibility with AS400 :vhs:)_
+algortihm (like [7-Zip](https://www.7-zip.org) for .7z) with password protection, same like `p7zip` 
+but in Java 8 ! :drum: _(for compatibility with AS400 :vhs:)_
+
+
 
 # :pager: Usage 
 
