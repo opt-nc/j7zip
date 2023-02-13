@@ -39,3 +39,7 @@ This tool is based on:
 
 - [Apache commons-compress](https://commons.apache.org/proper/commons-compress/)
 - [xz](https://tukaani.org/xz/java.html)
+
+# 💡 Related softwares
+
+-  [`NanaZip`](https://github.com/M2Team/NanaZip) (_"The 7-Zip derivative intended for the modern Windows experience "_)
